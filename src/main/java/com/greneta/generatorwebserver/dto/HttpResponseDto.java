@@ -9,6 +9,8 @@ public class HttpResponseDto {
 
     Object data;
 
+    String baseFullUri;
+
     HttpResponseDto(Object data) {
         this.data = data;
     }

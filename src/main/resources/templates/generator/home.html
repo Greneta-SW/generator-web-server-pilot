@@ -5,6 +5,7 @@
     <title>Blender Generate</title>
 
     <link rel="stylesheet" type="text/css" href="/files/main.css">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
 
 </head>
 <body>
@@ -23,10 +24,7 @@
         }
     }
 </script>
-<a id='newWindow' href='/blender/obj'  >Sample OBJ - All Texture</a>
-<a id='gltf' href='/blender/gltf' >Car GLTF - All Texture</a>
-<a id='fbx' href='/blender/fbx' >Sample FBX - All Texture</a>
-<a id='home' href='/blender'  >Sample OBJ - One Texture</a>
+
 <script th:inline="javascript" th:type="module" th:defer>
     import * as THREE from 'three';
     import {GUI} from '/node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
@@ -40,6 +38,7 @@
     const baseFileName = [[@{__${response?.baseFileName}__}]];
     const extension = [[@{__${response?.extension}__}]];
     const generateCheck = [[@{__${response?.generateCheck}__}]];
+    const initCheck = [[@{__${response?.initCheck}__}]];
     const myLoader = document.querySelector('#loader');
     const awsPath = 'https://greneta-object-upload.s3.ap-northeast-2.amazonaws.com/';
     const objPath = awsPath + 'obj/';
@@ -93,6 +92,19 @@
 
     }
 
+    function guiInit(gui) {
+        const data = {
+            'Generator Request URL': 'http://localhost:8081'
+        };
+        const folder = gui.addFolder('URL INIT');
+        folder.add(data, 'Generator Request URL').onChange(setRequestUrl('requestUrl'));
+        folder.add({
+            x: function () {
+                postInitUrl()
+            }
+        }, 'x').name('Init');
+    }
+
     function guiSceneFog(folder, scene) {
         const fogFolder = folder.addFolder('scene.fog');
         const fog = new THREE.Fog(0x3f7b9d, 0, 60);
@@ -122,6 +134,8 @@
     }
 
     const extensionKeys = getObjectsKeys(extensionKey)
+
+    // Request 객체
     var request = {
         width : 2,
         depth : 2,
@@ -132,6 +146,10 @@
         gapFrequency : 1,
         extension : extensionKey.obj
     };
+    var initData = {
+        requestUrl: 'http://localhost:8081',
+    };
+
     function guiParameter(gui) {
         const data = {
             Width: 2,
@@ -160,6 +178,13 @@
                 postGenerator()
             }
         }, 'x').name('Generate');
+        if (generateCheck === 'false') {
+            folder.add({
+                x: function () {
+                    location.href = '/generator/reset-url'
+                }
+            }, 'x').name('Reset Request URL');
+        }
         getAfterGenerate(folder, gui)
 
     }
@@ -195,6 +220,20 @@
         document.body.appendChild(form);
         form.submit();
     }
+    function postInitUrl() {
+        const form = document.createElement('form');
+        form.setAttribute('method','POST');
+        form.setAttribute('action','/generator/init-url');
+        for(const key in initData) {
+            const hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name", key);
+            hiddenField.setAttribute("value", initData[key]);
+            form.appendChild(hiddenField);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    }
 
     function deleteGenerator() {
         const modelId = [[@{__${response?.modelId}__}]];
@@ -220,7 +259,11 @@
                 request[key] = value
             }
         };
-
+    }
+    function setRequestUrl(key) {
+        return function (value) {
+            initData[key] = value
+        };
     }
 
 
@@ -238,7 +281,7 @@
     scene.background = new THREE.Color(0x444444);
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
+    const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 20000);
     camera.position.z = 50;
 
     const ambientLight = new THREE.AmbientLight(0xE6E6E6, 1);
@@ -276,8 +319,13 @@
 
     };
 
-    guiScene(gui, scene);
-    guiParameter(gui)
+    if(initCheck === 'true') {
+        guiScene(gui, scene);
+        guiParameter(gui);
+    } else {
+        guiInit(gui);
+    }
+
     if (extension === '.obj') {
         objLoader()
     } else if (extension === '.fbx') {
@@ -315,6 +363,7 @@
         const fbxLoader = new FBXLoader(manager);
         fbxLoader.setPath(fbxPath);
         fbxLoader.load('model/' + baseFileName + '.fbx', function (object) {
+            object.scale.set(0.01, 0.01, 0.01);
             scene.add(object);
         }, function (xhr) {
             console.log('fbxLoader' + (xhr.loaded / xhr.total) * 100 + '% loaded');
@@ -323,13 +372,9 @@
     function gltfLoader() {
         let loader = new GLTFLoader(manager);
         loader.setPath(gltfPath)
-        loader.load('model/' + baseFileName + '.gltf', function(gltf){
-            if (baseFileName === 'scene') {
-                let model;
-                model = gltf.scene.children[0];
-                model.scale.set(0.5, 0.5, 0.5);
-            }
-            scene.add(gltf.scene);
+        loader.load('model/' + baseFileName + '.gltf', function(object){
+            object.scene.scale.set(1, 1, 1);
+            scene.add(object.scene);
         }, function (xhr) {
             console.log('fbxLoader' + (xhr.loaded / xhr.total) * 100 + '% loaded');
         });

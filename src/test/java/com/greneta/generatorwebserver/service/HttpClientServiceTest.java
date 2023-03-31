@@ -46,6 +46,7 @@ class HttpClientServiceTest {
         this.testModelId = dto.getBlenderModelId();
         //Then
         assertThat(dto.getExtension()).isEqualTo(requestDto.getExtension());
+        assertThat(httpResponseDto.getBaseFullUri()).isEqualTo(dto.getBaseFullUri());
     }
     private GeneratorRequestDto createObjRequestDto() {
         return GeneratorRequestDto.builder()

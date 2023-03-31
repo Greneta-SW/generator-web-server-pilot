@@ -6,63 +6,6 @@
 
     <link rel="stylesheet" type="text/css" href="/files/main.css">
 
-    <style>
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        #newWindow {
-            display: block;
-            position: absolute;
-            bottom: 0.3em;
-            left: 0.5em;
-            color: #fff;
-        }
-        #gltf {
-            display: block;
-            position: absolute;
-            bottom: 1.8em;
-            left: 0.5em;
-            color: #fff;
-        }
-        #fbx {
-            display: block;
-            position: absolute;
-            bottom: 3.3em;
-            left: 0.5em;
-            color: #fff;
-        }
-        #home {
-            display: block;
-            position: absolute;
-            bottom: 4.5em;
-            left: 0.5em;
-            color: #fff;
-        }
-
-
-        .loader {
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            position: fixed;
-            display: block;
-            opacity: 0.8;
-            background: white;
-            z-index: 99;
-            text-align: center;
-        }
-
-        .loader > img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            z-index: 100;
-        }
-    </style>
 </head>
 <body>
 <div class="loader" id="loader">
@@ -94,13 +37,14 @@
     import {FBXLoader} from 'three/addons/loaders/FBXLoader.js'
     import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'
 
-    const fileName = [[@{__${response?.fileName}__}]];
+    const baseFileName = [[@{__${response?.baseFileName}__}]];
     const extension = [[@{__${response?.extension}__}]];
     const generateCheck = [[@{__${response?.generateCheck}__}]];
     const myLoader = document.querySelector('#loader');
-    const objPath = 'https://greneta-object-upload.s3.ap-northeast-2.amazonaws.com/obj/';
-    const fbxPath = 'https://greneta-object-upload.s3.ap-northeast-2.amazonaws.com/fbx/';
-    const gltfPath = 'https://greneta-object-upload.s3.ap-northeast-2.amazonaws.com/gltf/';
+    const awsPath = 'https://greneta-object-upload.s3.ap-northeast-2.amazonaws.com/';
+    const objPath = awsPath + 'obj/';
+    const fbxPath = awsPath + 'fbx/';
+    const gltfPath = awsPath + 'gltf/';
 
 
 
@@ -231,7 +175,7 @@
             }, 'x').name('Download');
             afterGenerateFolder.add({
                 x: function () {
-                    location.href = '/generator'
+                    deleteGenerator()
                 }
             }, 'x').name('Home');
         }
@@ -253,14 +197,15 @@
     }
 
     function deleteGenerator() {
+        const modelId = [[@{__${response?.modelId}__}]];
         const form = document.createElement('form');
         form.setAttribute('method','DELETE');
-        form.setAttribute('action','/generator');
+        form.setAttribute('action','/generator/'+modelId);
         for(const key in request) {
             const hiddenField = document.createElement("input");
             hiddenField.setAttribute("type", "hidden");
-            hiddenField.setAttribute("modelId", key);
-            hiddenField.setAttribute("value", request[key]);
+            hiddenField.setAttribute("modelId", modelId);
+            // hiddenField.setAttribute("value", request[key]);
             form.appendChild(hiddenField);
         }
         document.body.appendChild(form);
@@ -293,7 +238,7 @@
     scene.background = new THREE.Color(0x444444);
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-    const camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 1, 10000);
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 20000);
     camera.position.z = 50;
 
     const ambientLight = new THREE.AmbientLight(0xE6E6E6, 1);
@@ -350,14 +295,14 @@
         let mtlLoader = new MTLLoader(manager);
         mtlLoader.setPath(objPath)
 
-        mtlLoader.load('model/' + fileName + '.mtl', function (mater) {
+        mtlLoader.load('model/' + baseFileName + '.mtl', function (mater) {
             var materials = mater;
             materials.preload();
             const objLoader = new OBJLoader(manager);
             console.log(materials.materials)
             objLoader.setMaterials(materials);
             objLoader.setPath(objPath)
-            objLoader.load('model/' + fileName + '.obj', function (object) {
+            objLoader.load('model/' + baseFileName + '.obj', function (object) {
                     scene.add(object);
                 }, function (xhr) {
                     console.log('objLoader' + (xhr.loaded / xhr.total) * 100 + '% loaded');
@@ -369,7 +314,7 @@
     function fbxLoader() {
         const fbxLoader = new FBXLoader(manager);
         fbxLoader.setPath(fbxPath);
-        fbxLoader.load('model/' + fileName + '.fbx', function (object) {
+        fbxLoader.load('model/' + baseFileName + '.fbx', function (object) {
             scene.add(object);
         }, function (xhr) {
             console.log('fbxLoader' + (xhr.loaded / xhr.total) * 100 + '% loaded');
@@ -378,8 +323,8 @@
     function gltfLoader() {
         let loader = new GLTFLoader(manager);
         loader.setPath(gltfPath)
-        loader.load('model/' + fileName + '.gltf', function(gltf){
-            if (fileName === 'scene') {
+        loader.load('model/' + baseFileName + '.gltf', function(gltf){
+            if (baseFileName === 'scene') {
                 let model;
                 model = gltf.scene.children[0];
                 model.scale.set(0.5, 0.5, 0.5);

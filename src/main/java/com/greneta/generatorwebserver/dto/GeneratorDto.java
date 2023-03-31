@@ -38,10 +38,14 @@ public class GeneratorDto {
 
     boolean generateCheck = false;
 
+    String baseFullUri;
+
     public static GeneratorDto convertData(HttpResponseDto dto) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String , String > responseDtoData = (Map<String , String >) dto.getData();
-        return mapper.convertValue(responseDtoData, GeneratorDto.class);
+        GeneratorDto generatorDto = mapper.convertValue(responseDtoData, GeneratorDto.class);
+        generatorDto.setBaseFullUri(dto.getBaseFullUri());
+        return generatorDto;
     }
 
 

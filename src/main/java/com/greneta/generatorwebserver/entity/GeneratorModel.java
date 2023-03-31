@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Getter
 @NoArgsConstructor
 @Entity
@@ -17,15 +15,13 @@ import java.util.UUID;
 public class GeneratorModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long blenderModelId;
+    Long modelId;
 
+    @Column(nullable = false)
+    Long blenderServerModelId;
 
     @Column(nullable = false)
     String baseFileName;
-
-
-    @Column(nullable = false)
-    String modelUrl;
 
     @Column(nullable = false)
     Integer width;
@@ -54,8 +50,12 @@ public class GeneratorModel {
     @Column(nullable = false)
     String nodeGroup;
 
+    @Column(nullable = false)
+    String downloadUrl;
+
 
     GeneratorModel(GeneratorDto dto) {
+        this.blenderServerModelId = dto.getBlenderModelId();
         this.width = dto.getWidth();
         this.depth = dto.getDepth();
         this.height = dto.getHeight();
@@ -64,16 +64,14 @@ public class GeneratorModel {
         this.vGapFrequency = dto.getVgapFrequency();
         this.blankWallSelector = dto.getBlankWallSelector();
         this.extension = dto.getExtension();
-        this.baseFileName = generateFileName();
+        this.baseFileName = dto.getBaseFileName();
         this.nodeGroup = dto.getNodeGroup();
+        this.downloadUrl = dto.getBaseFullUri() + "/" + dto.getBlenderModelId();
     }
 
     public static GeneratorModel of(GeneratorDto dto) {
         return new GeneratorModel(dto);
     }
 
-    private String generateFileName() {
-        return UUID.randomUUID().toString();
-    }
 
 }

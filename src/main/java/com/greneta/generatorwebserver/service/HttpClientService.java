@@ -1,6 +1,7 @@
 package com.greneta.generatorwebserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greneta.generatorwebserver.constant.ApiUrl;
 import com.greneta.generatorwebserver.dto.GeneratorRequestDto;
 import com.greneta.generatorwebserver.dto.HttpResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +24,19 @@ import java.io.IOException;
 @Slf4j
 public class HttpClientService {
 
-    final String BASE_URL = "http://localhost:8081";
-    final ObjectMapper mapper = new ObjectMapper();
+    private final String BASE_URL = ApiUrl.BASE_LOCAL_URL.getUrl();
+
+    public final String BASE_FULL_URI = BASE_URL + "/blender/api";
+    private final ObjectMapper mapper = new ObjectMapper();
     public HttpResponseDto generateModelPostRequest(GeneratorRequestDto dto) {
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            HttpPost httpPost = new HttpPost(BASE_URL+"/blender/api");
+            HttpPost httpPost = new HttpPost(BASE_FULL_URI);
             httpPost.setEntity(new StringEntity(mapper.writeValueAsString(dto)));
             httpPost.setHeader("Content-type", "application/json");
             log.info("Executing request = {} ",httpPost.getRequestLine());
-            return httpclient.execute(httpPost, getResponseHandler());
+            HttpResponseDto execute = httpclient.execute(httpPost, getResponseHandler());
+            execute.setBaseFullUri(BASE_FULL_URI);
+            return execute;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -39,7 +44,7 @@ public class HttpClientService {
 
     public HttpResponseDto deleteModelRequest(Long modelId) {
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            HttpDelete httpPost = new HttpDelete(BASE_URL+"/blender/api/"+modelId);
+            HttpDelete httpPost = new HttpDelete(BASE_FULL_URI + "/"+modelId);
             httpPost.setHeader("Content-type", "application/json");
             log.info("Executing request = {} ",httpPost.getRequestLine());
             return httpclient.execute(httpPost, getResponseHandler());
@@ -54,6 +59,8 @@ public class HttpClientService {
             if (status >= 200 && status < 300) {
                 HttpEntity responseBody = response.getEntity();
                 if (responseBody != null) {
+                    //Todo : 예외가 발생 이유 확인
+//                    log.info("HTTP ResponseBody = {}",EntityUtils.toString(responseBody));
                     return mapper.readValue(
                             EntityUtils.toString(responseBody),
                             HttpResponseDto.class

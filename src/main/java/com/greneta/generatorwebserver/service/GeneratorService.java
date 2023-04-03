@@ -28,12 +28,8 @@ public class GeneratorService {
     public ModelResponseDto generateModel(GeneratorRequestDto dto, String requestUrl) {
         HttpResponseDto httpDto = httpClientService.generateModelPostRequest(dto, requestUrl);
         GeneratorDto generatorDto = GeneratorDto.convertData(httpDto);
-        log.info("GeneratorDto BaseFileName = {}",generatorDto.getBaseFileName());
         GeneratorModel model = GeneratorModel.of(generatorDto);
-        log.info("GeneratorModel BaseFileName = {}",model.getBaseFileName());
         GeneratorModel savaModel = modelRepository.saveBlenderModel(model);
-        log.info("GeneratorSaveModel BaseFileName = {}",savaModel.getBaseFileName());
-
         return ModelResponseDto.of(savaModel);
     }
 

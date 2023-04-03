@@ -39,8 +39,11 @@ public class GeneratorController {
             @ModelAttribute GeneratorRequestDto requestDto
     ) {
         String requestUrl = urlService.getRequestUrl();
+        Long prevModelId = requestDto.getPrevModelId();
+        if (requestDto.getGenerateCheck() && prevModelId != null) {
+            generateService.deleteModel(prevModelId, requestUrl);
+        }
         ModelResponseDto modelResponseDto = generateService.generateModel(requestDto, requestUrl);
-        log.info("ModelResponseDto BaseFileName = {}", modelResponseDto.getBaseFileName());
         return new ModelAndView(
                 "generator/home"
                 , Map.of(
@@ -55,7 +58,6 @@ public class GeneratorController {
             @RequestParam String requestUrl
     ) {
         Boolean aBoolean = urlService.setUrl(requestUrl);
-
         return new ModelAndView(
                 "generator/home"
                 , Map.of(

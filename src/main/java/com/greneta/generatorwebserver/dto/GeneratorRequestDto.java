@@ -35,4 +35,9 @@ public class GeneratorRequestDto {
     @NotNull
     String extension;
 
+    @NotNull
+    Boolean generateCheck;
+
+    Long prevModelId;
+
 }

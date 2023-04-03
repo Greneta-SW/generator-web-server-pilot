@@ -69,6 +69,7 @@ public class HttpClientService {
                     return null;
                 }
             } else {
+                //Todo : Status Code 활용하여 예외처리
                 throw new ClientProtocolException("Unexpected response status: " + status);
             }
         };

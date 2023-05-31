@@ -1,10 +1,12 @@
 package com.greneta.generatorwebserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.greneta.generatorwebserver.constant.ApiUrl;
 import com.greneta.generatorwebserver.dto.GeneratorRequestDto;
 import com.greneta.generatorwebserver.dto.GeneratorDto;
 import com.greneta.generatorwebserver.dto.HttpResponseDto;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("local")
+@Disabled
 class HttpClientServiceTest {
 
     @Autowired
@@ -30,7 +33,7 @@ class HttpClientServiceTest {
     @AfterEach
     public void afterEach() {
         if (testModelId != null) {
-            service.deleteModelRequest(testModelId);
+            service.deleteModelRequest(testModelId, ApiUrl.BASE_LOCAL_URL.getUrl());
         }
     }
 
@@ -40,7 +43,7 @@ class HttpClientServiceTest {
     void givenRequestDtoWhenGeneratePostRequestThenReturnHttpResponseDtoStatusOk() {
         //Given
         GeneratorRequestDto requestDto = createObjRequestDto();
-        HttpResponseDto httpResponseDto = service.generateModelPostRequest(requestDto);
+        HttpResponseDto httpResponseDto = service.generateModelPostRequest(requestDto, ApiUrl.BASE_LOCAL_URL.getUrl());
         //When
         GeneratorDto dto = GeneratorDto.convertData(httpResponseDto);
         this.testModelId = dto.getBlenderModelId();

@@ -25,21 +25,17 @@ public class GeneratorService {
     private final ModelRepository modelRepository;
 
 
-    public ModelResponseDto generateModel(GeneratorRequestDto dto) {
-        HttpResponseDto httpDto = httpClientService.generateModelPostRequest(dto);
+    public ModelResponseDto generateModel(GeneratorRequestDto dto, String requestUrl) {
+        HttpResponseDto httpDto = httpClientService.generateModelPostRequest(dto, requestUrl);
         GeneratorDto generatorDto = GeneratorDto.convertData(httpDto);
-        log.info("GeneratorDto BaseFileName = {}",generatorDto.getBaseFileName());
         GeneratorModel model = GeneratorModel.of(generatorDto);
-        log.info("GeneratorModel BaseFileName = {}",model.getBaseFileName());
         GeneratorModel savaModel = modelRepository.saveBlenderModel(model);
-        log.info("GeneratorSaveModel BaseFileName = {}",savaModel.getBaseFileName());
-
         return ModelResponseDto.of(savaModel);
     }
 
-    public void deleteModel(Long modelId) {
+    public void deleteModel(Long modelId, String requestUrl) {
         GeneratorModel generatorModel = verifiedModelById(modelId);
-        httpClientService.deleteModelRequest(generatorModel.getBlenderServerModelId());
+        httpClientService.deleteModelRequest(generatorModel.getBlenderServerModelId(),requestUrl);
         modelRepository.deleteBlenderModelById(generatorModel.getModelId());
     }
 

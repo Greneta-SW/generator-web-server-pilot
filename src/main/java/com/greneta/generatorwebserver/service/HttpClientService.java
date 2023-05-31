@@ -2,8 +2,10 @@ package com.greneta.generatorwebserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.greneta.generatorwebserver.constant.ApiUrl;
+import com.greneta.generatorwebserver.constant.ErrorCode;
 import com.greneta.generatorwebserver.dto.GeneratorRequestDto;
 import com.greneta.generatorwebserver.dto.HttpResponseDto;
+import com.greneta.generatorwebserver.exception.ServiceLogicException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -24,32 +26,30 @@ import java.io.IOException;
 @Slf4j
 public class HttpClientService {
 
-    private final String BASE_URL = ApiUrl.BASE_LOCAL_URL.getUrl();
-
-    public final String BASE_FULL_URI = BASE_URL + "/blender/api";
+    public final String BASE_URI = "/blender/api";
     private final ObjectMapper mapper = new ObjectMapper();
-    public HttpResponseDto generateModelPostRequest(GeneratorRequestDto dto) {
+    public HttpResponseDto generateModelPostRequest(GeneratorRequestDto dto, String requestUrl) {
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            HttpPost httpPost = new HttpPost(BASE_FULL_URI);
+            HttpPost httpPost = new HttpPost(requestUrl + BASE_URI);
             httpPost.setEntity(new StringEntity(mapper.writeValueAsString(dto)));
             httpPost.setHeader("Content-type", "application/json");
             log.info("Executing request = {} ",httpPost.getRequestLine());
             HttpResponseDto execute = httpclient.execute(httpPost, getResponseHandler());
-            execute.setBaseFullUri(BASE_FULL_URI);
+            execute.setBaseFullUri(requestUrl+BASE_URI);
             return execute;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ServiceLogicException(ErrorCode.HTTP_REQUEST_IO_ERROR);
         }
     }
 
-    public HttpResponseDto deleteModelRequest(Long modelId) {
+    public void deleteModelRequest(Long modelId, String requestUrl) {
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            HttpDelete httpPost = new HttpDelete(BASE_FULL_URI + "/"+modelId);
+            HttpDelete httpPost = new HttpDelete(requestUrl + BASE_URI + "/"+modelId);
             httpPost.setHeader("Content-type", "application/json");
             log.info("Executing request = {} ",httpPost.getRequestLine());
-            return httpclient.execute(httpPost, getResponseHandler());
+            httpclient.execute(httpPost, getResponseHandler());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ServiceLogicException(ErrorCode.HTTP_REQUEST_IO_ERROR);
         }
     }
 
@@ -69,6 +69,7 @@ public class HttpClientService {
                     return null;
                 }
             } else {
+                //Todo : Status Code 활용하여 예외처리
                 throw new ClientProtocolException("Unexpected response status: " + status);
             }
         };
